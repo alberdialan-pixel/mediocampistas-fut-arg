@@ -1,0 +1,185 @@
+
+<h2 class="sr-only">Dispersión de 22 mediocampistas de la Liga Profesional Apertura 2026. Eje X: pases totales por 90 minutos. Eje Y: precisión de pase en porcentaje.</h2>
+
+<div style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:12px;font-size:12px;color:var(--color-text-secondary);padding:0 4px">
+  <span style="display:flex;align-items:center;gap:5px"><span style="width:11px;height:11px;border-radius:50%;background:#639922;display:inline-block"></span>Top 5 carrusel</span>
+  <span style="display:flex;align-items:center;gap:5px"><span style="width:11px;height:11px;border-radius:50%;background:#5BA8D4;display:inline-block"></span>Belgrano campeón</span>
+  <span style="display:flex;align-items:center;gap:5px"><span style="width:11px;height:11px;border-radius:50%;background:#888780;display:inline-block"></span>Resto</span>
+</div>
+
+<div style="position:relative;width:100%;height:500px">
+  <canvas id="sc3" role="img" aria-label="22 mediocampistas. Fattori (74.4p, 90.5%) y Paredes (72.9p, 89.3%) lideran en volumen. Cardozo (53.3p, 90.6%) es el más preciso del grupo medio. Sánchez de Belgrano: 48.3p y 86.9%. Banega tiene alto volumen pero menor precisión."></canvas>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+const data = [
+  {n:'F. Fattori',   x:74.40, y:90.48, g:'top5'},
+  {n:'L. Paredes',   x:72.94, y:89.29, g:'top5'},
+  {n:'É. Banega',    x:65.03, y:86.51, g:'rest'},
+  {n:'Fausto Vera',  x:62.69, y:89.91, g:'top5'},
+  {n:'A. Moreno',    x:56.85, y:85.38, g:'top5'},
+  {n:'A. Medina',    x:56.36, y:83.60, g:'rest'},
+  {n:'A. Molinas',   x:54.68, y:86.07, g:'rest'},
+  {n:'J. Sforza',    x:53.76, y:86.22, g:'rest'},
+  {n:'A. Cardozo',   x:53.33, y:90.59, g:'top5'},
+  {n:'A. Cabrera',   x:53.13, y:86.25, g:'rest'},
+  {n:'C. Baeza',     x:53.01, y:86.26, g:'rest'},
+  {n:'M. Delgado',   x:52.68, y:89.09, g:'rest'},
+  {n:'G. Lódico',    x:51.38, y:85.00, g:'rest'},
+  {n:'S. Sosa',      x:50.85, y:84.56, g:'rest'},
+  {n:'F. Amarfil',   x:50.02, y:83.36, g:'rest'},
+  {n:'A. Sánchez',   x:48.27, y:86.86, g:'bel'},
+  {n:'F. Ibarra',    x:48.09, y:86.02, g:'rest'},
+  {n:'M. Galarza',   x:47.76, y:87.01, g:'rest'},
+  {n:'V. Pizarro',   x:46.77, y:86.34, g:'rest'},
+  {n:'E. Piovi',     x:46.61, y:85.13, g:'rest'},
+  {n:'Jalil Elías',  x:43.50, y:86.32, g:'rest'},
+  {n:'M. Pittón',    x:42.31, y:85.52, g:'rest'},
+];
+
+// Exact averages from dataset
+const avgX = data.reduce((s,d)=>s+d.x,0)/data.length; // 53.84
+const avgY = data.reduce((s,d)=>s+d.y,0)/data.length; // 86.63
+
+const CFG = {
+  top5: {bg:'rgba(99,153,34,0.85)',  border:'#3B6D11', r:8},
+  bel:  {bg:'rgba(91,168,212,0.90)', border:'#185FA5', r:8},
+  rest: {bg:'rgba(136,135,128,0.70)',border:'#5F5E5A', r:6.5},
+};
+
+const isDark = matchMedia('(prefers-color-scheme:dark)').matches;
+const textCol = isDark ? 'rgba(255,255,255,0.58)' : 'rgba(0,0,0,0.50)';
+const gridCol = isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.07)';
+const lineCol = isDark ? 'rgba(255,255,255,0.20)' : 'rgba(0,0,0,0.14)';
+
+// Label offset logic to reduce overlap
+const offsets = {
+  'F. Fattori':   {dx:8,  dy:-8,  anchor:'left'},
+  'L. Paredes':   {dx:8,  dy:8,   anchor:'left'},
+  'É. Banega':    {dx:8,  dy:-10, anchor:'left'},
+  'Fausto Vera':  {dx:8,  dy:-9,  anchor:'left'},
+  'A. Moreno':    {dx:-8, dy:10,  anchor:'right'},
+  'A. Medina':    {dx:8,  dy:9,   anchor:'left'},
+  'A. Molinas':   {dx:-8, dy:-9,  anchor:'right'},
+  'J. Sforza':    {dx:8,  dy:8,   anchor:'left'},
+  'A. Cardozo':   {dx:8,  dy:-9,  anchor:'left'},
+  'A. Cabrera':   {dx:-8, dy:9,   anchor:'right'},
+  'C. Baeza':     {dx:8,  dy:9,   anchor:'left'},
+  'M. Delgado':   {dx:-8, dy:-9,  anchor:'right'},
+  'G. Lódico':    {dx:8,  dy:8,   anchor:'left'},
+  'S. Sosa':      {dx:-8, dy:9,   anchor:'right'},
+  'F. Amarfil':   {dx:8,  dy:-9,  anchor:'left'},
+  'A. Sánchez':   {dx:8,  dy:-10, anchor:'left'},
+  'F. Ibarra':    {dx:-8, dy:-9,  anchor:'right'},
+  'M. Galarza':   {dx:8,  dy:9,   anchor:'left'},
+  'V. Pizarro':   {dx:-8, dy:8,   anchor:'right'},
+  'E. Piovi':     {dx:8,  dy:-8,  anchor:'left'},
+  'Jalil Elías':  {dx:-8, dy:-9,  anchor:'right'},
+  'M. Pittón':    {dx:8,  dy:9,   anchor:'left'},
+};
+
+const labelPlugin = {
+  id:'playerLabels',
+  afterDatasetsDraw(chart) {
+    const ctx = chart.ctx;
+    chart.data.datasets.forEach((ds, di) => {
+      const meta = chart.getDatasetMeta(di);
+      meta.data.forEach((pt, pi) => {
+        const d = ds.data[pi];
+        const o = offsets[d.name] || {dx:8, dy:-8, anchor:'left'};
+        const isHighlight = d.g !== 'rest';
+        ctx.save();
+        ctx.font = (isHighlight ? '600 ' : '400 ') + '11px Arial,sans-serif';
+        ctx.fillStyle = isDark
+          ? (isHighlight ? 'rgba(255,255,255,0.92)' : 'rgba(255,255,255,0.65)')
+          : (isHighlight ? 'rgba(0,0,0,0.80)'       : 'rgba(0,0,0,0.58)');
+        ctx.textAlign = o.anchor;
+        ctx.textBaseline = 'middle';
+        ctx.fillText(d.name, pt.x + o.dx, pt.y + o.dy);
+        ctx.restore();
+      });
+    });
+  }
+};
+
+const quadPlugin = {
+  id:'quadrants',
+  beforeDatasetsDraw(chart) {
+    const {ctx, chartArea:{left,right,top,bottom}, scales:{x,y}} = chart;
+    const cx = x.getPixelForValue(avgX);
+    const cy = y.getPixelForValue(avgY);
+    ctx.save();
+    ctx.setLineDash([5,5]);
+    ctx.strokeStyle = lineCol;
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(cx,top);    ctx.lineTo(cx,bottom); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(left,cy);   ctx.lineTo(right,cy);  ctx.stroke();
+    ctx.setLineDash([]);
+    const qTextCol = isDark ? 'rgba(255,255,255,0.30)' : 'rgba(0,0,0,0.28)';
+    ctx.font = '11px Arial,sans-serif';
+    ctx.fillStyle = qTextCol;
+    ctx.textAlign = 'left';
+    ctx.fillText('Alto vol. · Alta prec.',  cx+5,  top+13);
+    ctx.fillText('Bajo vol. · Alta prec.',  left+5, top+13);
+    ctx.fillText('Alto vol. · Baja prec.',  cx+5,  bottom-8);
+    ctx.fillText('Bajo vol. · Baja prec.',  left+5, bottom-8);
+    // avg labels on axes
+    ctx.fillStyle = isDark ? 'rgba(255,255,255,0.40)' : 'rgba(0,0,0,0.32)';
+    ctx.font = '10px Arial,sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('Prom. ' + avgX.toFixed(1), cx, bottom+18);
+    ctx.textAlign = 'right';
+    ctx.fillText('Prom. ' + avgY.toFixed(1)+'%', left-4, cy+4);
+    ctx.restore();
+  }
+};
+
+const order = ['rest','top5','bel'];
+const datasets = order.map(g => ({
+  type:'scatter',
+  label: g,
+  data: data.filter(d=>d.g===g).map(d=>({x:d.x, y:d.y, name:d.n, g:d.g})),
+  backgroundColor: CFG[g].bg,
+  borderColor: CFG[g].border,
+  borderWidth: g==='rest' ? 1 : 1.8,
+  pointRadius: CFG[g].r,
+  pointHoverRadius: CFG[g].r + 2,
+}));
+
+new Chart(document.getElementById('sc3'), {
+  type:'scatter',
+  data:{datasets},
+  options:{
+    responsive:true,
+    maintainAspectRatio:false,
+    layout:{padding:{top:22, right:90, bottom:22, left:44}},
+    plugins:{
+      legend:{display:false},
+      tooltip:{
+        callbacks:{
+          label(ctx){
+            const d = ctx.raw;
+            return [`${d.name}`, `Pases/90: ${d.x.toFixed(2)}`, `Precisión: ${d.y.toFixed(2)}%`];
+          }
+        }
+      }
+    },
+    scales:{
+      x:{
+        min:40, max:78,
+        title:{display:true, text:'Pases totales / 90', color:textCol, font:{size:12}},
+        ticks:{color:textCol, font:{size:11}, stepSize:5},
+        grid:{color:gridCol},
+      },
+      y:{
+        min:82.5, max:91.5,
+        title:{display:true, text:'Precisión de pase (%)', color:textCol, font:{size:12}},
+        ticks:{color:textCol, font:{size:11}, callback:v=>v.toFixed(1)+'%'},
+        grid:{color:gridCol},
+      }
+    }
+  },
+  plugins:[labelPlugin, quadPlugin]
+});
+</script>
